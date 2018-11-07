@@ -5,7 +5,7 @@
 <p><em> >>> $ python log_analyzer.py --config <путь_до_файла> </em></p>  
 <br>
 <h4>Конфиг по умолчанию:</h4>
-<p><b>“REPORT_SIZE”: 1000</b> '\t'  количество строк в отчете</p>
+<p><b>“REPORT_SIZE”: 1000</b> <tab> количество строк в отчете</p>
 <p><b>“REPORT_DIR”: “./reports”</b>   директория с готовыми отчетами</p>
 <p><b>“LOG_DIR”: “./log”</b>   директория с логами</p>
 <p><b>“MONITORING_DIR”: “None”</b>   путь до лог-файла скрипта</p>
