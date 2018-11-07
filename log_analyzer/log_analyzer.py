@@ -3,6 +3,7 @@
 
 import argparse
 import os
+import io
 import re
 from datetime import datetime
 import collections
@@ -10,6 +11,26 @@ import logging
 import gzip
 from string import Template
 import json
+
+
+latest_log = collections.namedtuple('latest_log', ['log_file_date', 'log_file_name'])
+report_template = 'report.html'
+config_pattern = r'[\"\'](?P<c_name>\S+)[\"\']: (?P<c_value>\S+)$'
+log_file_pattern = r'^nginx-access-ui\.log-(?P<date>\d{8})(\.gz)?$'
+parse_line_pattern = re.compile(r'^\S+ '                          # remote_addr
+                              '\S+  '                             # remote_user
+                              '\S+ '                              # http_x_real_ip
+                              '\[\S+ \S+\] '                      # time_local
+                              '\"\S+ (?P<url_name>\S+) \S+\" '    # request
+                              '\S+ '                              # status
+                              '\S+ '                              # body_bites_sent
+                              '\"\S+\" '                          # http_referer
+                              '\".*\" '                           # http_user_agent
+                              '\"\S+\" '                          # http_x_forwarded_for
+                              '\"\S+\" '                          # http_X_REQUEST_ID
+                              '\"\S+\" '                          # http_X_RB_USER
+                              '(?P<request_time>\d+\.\d+)$'       # request_time
+                              )
 
 
 def get_config(file_path):
@@ -24,7 +45,7 @@ def get_config(file_path):
             file_conf = {}
             for i in file_list:
                 i.decode('utf-8')
-                match_line = re.match('[\"\'](?P<c_name>\S+)[\"\']: (?P<c_value>\S+)$', i)
+                match_line = re.match(config_pattern, i)
                 if match_line:
                     c_name = match_line.groupdict()['c_name']
                     c_value = match_line.groupdict()['c_value']
@@ -35,7 +56,7 @@ def get_config(file_path):
 
 def create_monitoring(monitoring_dir=''):
     """
-    creating monitoring of a programm working
+    creating monitoring of a script working
     :param dir, where logging write to
     :return:
     """
@@ -55,20 +76,27 @@ def get_log(log_dir):
     :param log_dir:
     :return log file's name
     """
-    if os.path.isdir(log_dir):
-        latest_log = collections.namedtuple('latest_log', ['log_file_date', 'log_file_name'])
-        latest_log_file = None
-        for file_name in os.listdir(log_dir):
-            file_name.decode('utf-8')
-            match_file = re.match('^nginx-access-ui\.log-(?P<date>\d{8})(\.gz)?$', file_name)
-            if match_file:
-                date_string = match_file.groupdict()['date']
-                file_date = datetime.strptime(date_string, "%Y%m%d").date()
+    if not os.path.isdir(log_dir):
+        return None
 
-                if not latest_log_file or file_date > latest_log_file.log_file_date:
-                    latest_log_file = latest_log(log_file_date=file_date, log_file_name=file_name)
-        logging.info('latest log file has been found')
-        return latest_log_file
+    latest_log_file = None
+    for file_name in os.listdir(log_dir):
+        file_name.decode('utf-8')
+        match_file = re.match(log_file_pattern, file_name)
+        if not match_file:
+            continue
+
+        date_string = match_file.groupdict()['date']
+
+        try:
+            file_date = datetime.strptime(date_string, "%Y%m%d").date()
+        except ValueError:
+            continue
+
+        if not latest_log_file or file_date > latest_log_file.log_file_date:
+            latest_log_file = latest_log(log_file_date=file_date, log_file_name=file_name)
+    logging.info('latest log file has been found')
+    return latest_log_file
 
 
 def create_report(file_path, report_size, max_err_perc=60):
@@ -99,24 +127,22 @@ def read_log_file(file_path, max_err_perc):
     :param file_path:
     :return: parsed args from lines
     """
-    if file_path.endswith('.gz'):
-        log = gzip.open(file_path, 'rb')
-    else:
-        log = open(file_path)
+    log = gzip.open if file_path.endswith('.gz') else io.open
+
     total_lines = parsed = 0
-    for line in log:
-        record_line = parse_line(line.decode('utf-8'))
-        total_lines += 1
-        if record_line:
-            parsed += 1
-            yield record_line
-        else:
-            logging.info('line has not been parsed')
-    log.close()
+    with log(file_path, 'rb') as lf:
+        for line in lf:
+            record_line = parse_line(line.decode('utf-8'))
+            total_lines += 1
+            if record_line:
+                parsed += 1
+                yield record_line
+            else:
+                logging.info('line has not been parsed')
+
     error_perc = ((total_lines-parsed)/total_lines)*100
     if error_perc >= max_err_perc:
         logging.exception('the number of errors exceeded the allowed')
-        raise SyntaxError
     else:
         logging.info('{}% of lines has not been parsed'.format(error_perc))
 
@@ -127,21 +153,7 @@ def parse_line(record):
     :param record:
     :return: url, request time of it
     """
-    find_in_line = re.compile('^\S+ '                             # remote_addr
-                              '\S+  '                             # remote_user
-                              '\S+ '                              # http_x_real_ip
-                              '\[\S+ \S+\] '                      # time_local
-                              '\"\S+ (?P<url_name>\S+) \S+\" '    # request
-                              '\S+ '                              # status
-                              '\S+ '                              # body_bites_sent
-                              '\"\S+\" '                          # http_referer
-                              '\".*\" '                           # http_user_agent
-                              '\"\S+\" '                          # http_x_forwarded_for
-                              '\"\S+\" '                          # http_X_REQUEST_ID
-                              '\"\S+\" '                          # http_X_RB_USER
-                              '(?P<request_time>\d+\.\d+)$'       # request_time
-                              )
-    match_line = find_in_line.match(record)
+    match_line = parse_line_pattern.match(record)
     url_name = match_line.groupdict()['url_name']
     request_time = match_line.groupdict()['request_time']
     return url_name, request_time
@@ -191,7 +203,7 @@ def update_report_list(list_in, total_request, total_time):
 
 def get_median(list_in):
     """
-    countig median of list values
+    counting median of list values
     :param list_in:
     :return: median
     """
@@ -228,19 +240,21 @@ def render_report(template_file, report_path, data):
 
 def main(config):
     log_file_name = get_log(config.get('LOG_DIR'))
-    actual_date = log_file_name.log_file_date
-    log_file = log_file_name.log_file_name
+    if not log_file_name:
+        logging.info('No log file to analyze')
+        return
 
-    report_name = 'report-{}.html'.format(actual_date)
+    report_name = 'report-{}.html'.format(log_file_name.log_file_date.strftime('%Y.%m.%d'))
     report_file_path = os.path.join(config.get('REPORT_DIR'), report_name)
-    report_template = 'report.html'
-    if not os.path.isfile(report_file_path):
-        new_report = create_report(log_file, int(config.get('REPORT_SIZE')), int(config.get('MAX_ERR_PERC', 60)))
-        logging.info('new report has been created')
-        render_report(report_template, report_file_path, new_report)
-        logging.info('report has been rendered')
-    else:
+
+    if os.path.isfile(report_file_path):
         logging.info('Nothing to analyze')
+        return
+
+    new_report = create_report(log_file_name.log_file_name, int(config.get('REPORT_SIZE')), int(config.get('MAX_ERR_PERC', 60)))
+    logging.info('new report has been created')
+    render_report(report_template, report_file_path, new_report)
+    logging.info('report has been rendered')
 
 
 if __name__ == '__main__':
@@ -261,10 +275,7 @@ if __name__ == '__main__':
         except TypeError:
             raise SystemExit('config file does not exist')
 
-    if config.get('MONITORING_DIR'):
-        create_monitoring(config.get('MONITORING_DIR'))
-    else:
-        create_monitoring('')
+    create_monitoring(config.get('MONITORING_DIR'))
 
     try:
         main(config)

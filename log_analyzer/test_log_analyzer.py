@@ -23,14 +23,23 @@ class ConfigTest(unittest.TestCase):
 
 class ReportTest(unittest.TestCase):
     def setUp(self):
-        with open('log-example.log') as f:
-            content = f.read()
-
         with gzip.open('nginx-access-ui.log-20181101.gz', 'w') as f1:
-            f1.write(content)
+            f1.write('1.196.116.32 -  - [- -] "GET /api/v2/banner/25019354 HTTP/1.1" 200 927 "-" "-" "-" "-" "-" 0.490')
+            f1.write('\n')
+            f1.write('1.99.174.176 -  - [- -] "GET /api/1/photogenic_banners/list/?server_name=WIN7RB4 HTTP/1.1" 200 12 "-" "-" "-" "-" "-" 0.133')
+            f1.write('\n')
+            f1.write('1.169.137.128 -  - [- -] "GET /api/v2/banner/16852664 HTTP/1.1" 200 19415 "-" "-" "-" "-" "-" 0.199')
+            f1.write('\n')
+            f1.write('1.196.116.32 -  - [- -] "GET /api/v2/banner/25019354 HTTP/1.1" 200 927 "-" "-" "-" "-" "-" 0.390')
+            f1.write('\n')
+            f1.write('1.99.174.176 -  - [- -] "GET /api/1/photogenic_banners/list/?server_name=WIN7RB4 HTTP/1.1" 200 12 "-" "-" "-" "-" "-" 0.233')
+            f1.write('\n')
+            f1.write('1.196.116.32 -  - [- -] "GET /api/v2/banner/25019354 HTTP/1.1" 200 927 "-" "-" "-" "-" "-" 0.290')
+            f1.write('\n')
 
         with bz2.BZ2File('nginx-access-ui.log-20181102.bz2', 'w') as f2:
-            f2.writelines(content)
+            f2.write('')
+
 
     def test_get_log_file(self):
         self.assertEqual(log_analyzer.get_log('.').log_file_name, 'nginx-access-ui.log-20181101.gz')
