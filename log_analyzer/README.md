@@ -5,11 +5,11 @@
 <p><em> >>> $ python log_analyzer.py --config <путь_до_файла> </em></p>  
 <br>
 <h4>Конфиг по умолчанию:</h4>
-<dt><b>“REPORT_SIZE”: 1000</b></dt> <dd>количество строк в отчете</dd>
-<dt><b>“REPORT_DIR”: “./reports”</b></dt> <dd>директория с готовыми отчетами<dd>
-<dt><b>“LOG_DIR”: “./log”</b></dt> <dd>директория с логами</dd>
-<dt><b>“MONITORING_DIR”: “None”</b></dt> <dd>путь до лог-файла скрипта</dd>
-<dt><b>“MAX_ERR_PERC”: “60”</b></dt> <dd>допустимое количество ошибок при обработке файла</dd>
+<p><b>“REPORT_SIZE”: 1000</b>   количество строк в отчете</p>
+<p><b>“REPORT_DIR”: “./reports”</b>   директория с готовыми отчетами</p>
+<p><b>“LOG_DIR”: “./log”</b><   директория с логами</p>
+<p><b>“MONITORING_DIR”: “None”</b>   путь до лог-файла скрипта</p>
+<p><b>“MAX_ERR_PERC”: “60”</b>   допустимое количество ошибок при обработке файла</p>
 <br>
 <h4>Запуск тестов (unittest):</h4>
 <p><em> >>> $ python -m unittest test_log_analyzer </em></p>
