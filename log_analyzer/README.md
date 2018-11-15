@@ -5,15 +5,18 @@
 
 #### Скрипту возможно указать считать конфиг из файла, передав его путь через --config #### 
 >  python log_analyzer.py --config <путь_до_файла>    
-
-
-
+  
+   
+  
 ### Конфиг по умолчанию: ###
 
 First Header  | Second Header
 ------------- | -------------
-Content Cell  | Content Cell
-Content Cell  | Content Cell
+“REPORT_SIZE”: | 1000 
+“REPORT_DIR”:  | ./reports”
+“LOG_DIR”:     |./log    
+“MONITORING_DIR”:|None     
+“MAX_ERR_PERC”: |60  
                  |             |                                                   
 _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 *“REPORT_SIZE”:   | 1000        |количество строк в отчете
