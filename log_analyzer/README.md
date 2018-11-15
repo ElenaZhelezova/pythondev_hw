@@ -6,7 +6,11 @@
 #### Скрипту возможно указать считать конфиг из файла, передав его путь через --config #### 
 >  python log_analyzer.py --config <путь_до_файла>    
   
-   
+
+#### Запуск тестов (unittest): ####
+>  python -m unittest test_log_analyzer 
+
+
   
 #### Конфиг по умолчанию: ####
 
@@ -19,5 +23,3 @@
 “MAX_ERR_PERC”: |60             | _допустимое количество ошибок при обработке файла_
 
 
-#### Запуск тестов (unittest): ####
->  python -m unittest test_log_analyzer 
