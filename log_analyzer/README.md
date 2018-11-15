@@ -12,22 +12,11 @@
 
 First Header  | First Header  | Second Header
 ------------- |------------- |------------- 
-Content Cell  | Content Cell  | Content Cell
-Content Cell  | Content Cell
-First Header  | Second Header   |
-------------- | ---------------- | ----------------------
 “REPORT_SIZE”: | 1000           | _количество строк в отчете_
 “REPORT_DIR”:  | ./reports”     | _директория с готовыми отчетами_
 “LOG_DIR”:     |./log           | _директория с логами_
 “MONITORING_DIR”:|None          | _путь до лог-файла скрипта_
 “MAX_ERR_PERC”: |60             | _допустимое количество ошибок при обработке файла_
-                 |             |                                                   
-_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-*“REPORT_SIZE”:   | 1000        |количество строк в отчете
-*“REPORT_DIR”:    |./reports”   |директория с готовыми отчетами
-*“LOG_DIR”:       |./log        |директория с логами
-*“MONITORING_DIR”:|None         |путь до лог-файла скрипта
-*“MAX_ERR_PERC”:  |60           |допустимое количество ошибок при обработке файла
 
 
 #### Запуск тестов (unittest): ####
