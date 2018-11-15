@@ -10,6 +10,10 @@
 
 ### Конфиг по умолчанию: ###
 
+First Header  | Second Header
+------------- | -------------
+Content Cell  | Content Cell
+Content Cell  | Content Cell
                  |             |                                                   
 _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 *“REPORT_SIZE”:   | 1000        |количество строк в отчете
