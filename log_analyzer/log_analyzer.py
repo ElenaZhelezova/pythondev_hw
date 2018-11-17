@@ -33,41 +33,48 @@ parse_line_pattern = re.compile(r'^\S+ '                          # remote_addr
                               )
 
 
-def get_config(file_path):
+def get_config(file_path=None):
     """
     parsing config parameters from config file
     :param config file path
     :return config parameters
     """
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            file_list = f.readlines()
-            file_conf = {}
-            for i in file_list:
-                i.decode('utf-8')
-                match_line = re.match(config_pattern, i)
-                if match_line:
-                    c_name = match_line.groupdict()['c_name']
-                    c_value = match_line.groupdict()['c_value']
-                    file_conf[c_name] = c_value.strip("\",")
+    default_config = {
+        "REPORT_SIZE": 1000,
+        "REPORT_DIR": "./reports",
+        "LOG_DIR": "./log"
+    }
+    if file_path is None:
+        return default_config
 
-        return file_conf
+    if not os.path.exists(file_path):
+        return IOError
+
+    with open(file_path, 'rb') as f:
+        file_conf = json.load(f, encoding='utf-8')
+
+    if not file_conf:
+        return ValueError
+
+    default_config.update(file_conf)
+
+    return default_config
 
 
-def create_monitoring(monitoring_dir=''):
+def create_logging(logging_dir=''):
     """
     creating monitoring of a script working
-    :param dir, where logging write to
+    :param logging_dir - dir, where logging write to
     :return:
     """
-    if os.path.isdir(monitoring_dir):
-        monitoring_file = os.path.join(monitoring_dir, 'log_analyze_monitoring.log')
+    if os.path.isdir(logging_dir):
+        logging_file = os.path.join(logging_dir, 'log_analyze.log')
     else:
-        monitoring_file = None
+        logging_file = None
 
-    logging.basicConfig(filename=monitoring_file, format='[%(asctime)s] %(levelname).1s %(message)s',
+    logging.basicConfig(filename=logging_file, format='[%(asctime)s] %(levelname).1s %(message)s',
                         datefmt='%Y.%m.%d %H:%M:%S', level=logging.INFO)
-    logging.info('monitoring has been started')
+    logging.info('logging has been started')
 
 
 def get_log(log_dir):
@@ -107,7 +114,7 @@ def create_report(file_path, report_size, max_err_perc=60):
     :param max_err_perc:
     :return:
     """
-    records = list(read_log_file(file_path, max_err_perc))
+    records = read_log_file(file_path, max_err_perc)
     total_requests = 0
     total_requests_time = 0
     report_dict = {}
@@ -229,7 +236,7 @@ def render_report(template_file, report_path, data):
         logging.info('report dir has been created')
 
     with open(template_file) as t_file:
-        template_str = t_file.read().encode('utf-8')
+        template_str = t_file.read().decode('utf-8')
         template = Template(template_str)
 
     rendering_report = template.safe_substitute(table_json=json.dumps(data))
@@ -239,19 +246,19 @@ def render_report(template_file, report_path, data):
 
 
 def main(config):
-    log_file_name = get_log(config.get('LOG_DIR'))
-    if not log_file_name:
+    analyzing_log = get_log(config.get('LOG_DIR'))
+    if not analyzing_log:
         logging.info('No log file to analyze')
         return
 
-    report_name = 'report-{}.html'.format(log_file_name.log_file_date.strftime('%Y.%m.%d'))
+    report_name = 'report-{}.html'.format(analyzing_log.log_file_date.strftime('%Y.%m.%d'))
     report_file_path = os.path.join(config.get('REPORT_DIR'), report_name)
 
     if os.path.isfile(report_file_path):
         logging.info('Nothing to analyze')
         return
 
-    new_report = create_report(log_file_name.log_file_name, int(config.get('REPORT_SIZE')), int(config.get('MAX_ERR_PERC', 60)))
+    new_report = create_report(analyzing_log.log_file_name, int(config.get('REPORT_SIZE')), int(config.get('MAX_ERR_PERC', 60)))
     logging.info('new report has been created')
     render_report(report_template, report_file_path, new_report)
     logging.info('report has been rendered')
@@ -262,20 +269,12 @@ if __name__ == '__main__':
     parser.add_argument('--config', default='default_config.conf')
     args = parser.parse_args()
 
-    config = {
-        "REPORT_SIZE": 1000,
-        "REPORT_DIR": "./reports",
-        "LOG_DIR": "./log"
-    }
+    try:
+        config = get_config(args.config)
+    except ValueError, IOError:
+        raise SystemExit('config file does not exist')
 
-    if args.config:
-        try:
-            new_config = get_config(args.config)
-            config.update(new_config)
-        except TypeError:
-            raise SystemExit('config file does not exist')
-
-    create_monitoring(config.get('MONITORING_DIR'))
+    create_logging(config.get('LOGGING_DIR'))
 
     try:
         main(config)
