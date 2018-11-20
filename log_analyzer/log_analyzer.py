@@ -48,7 +48,7 @@ def get_config(file_path=None):
         return default_config
 
     if not os.path.exists(file_path):
-        return IOError
+        raise IOError
 
     with open(file_path, 'rb') as f:
         file_conf = json.load(f, encoding='utf-8')
